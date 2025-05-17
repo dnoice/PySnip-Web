@@ -3,7 +3,7 @@
 <p align="center">
   <img src="assets/images/pysnip_web.png" alt="PySnip Banner" width="500">
   <br>
-  <em>"Snippets With Attitude"</em>
+  <em>"Snippets With Teeth 🦈"</em>
 </p>
 
 <p align="center">
