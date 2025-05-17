@@ -11,7 +11,7 @@ from pathlib import Path
 
 # Root directory of PySnip collection
 # Change this to match your PySnip root directory path
-PYSNIP_ROOT = os.environ.get('PYSNIP_ROOT', os.path.join(os.path.expanduser('~'), 'pysnip'))
+PYSNIP_ROOT = "/sdcard/1dd1/projects/personal/current/pysnip"
 
 # Application settings
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
