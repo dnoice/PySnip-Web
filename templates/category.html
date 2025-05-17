@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category.display_name }} - PySnip{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ category.display_name }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex align-items-center mb-4">
+    <div class="category-icon me-3">
+        <i class="fas fa-folder fa-2x text-primary"></i>
+    </div>
+    <h1>{{ category.display_name }}</h1>
+</div>
+
+<p class="lead">{{ category.description }}</p>
+
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Tools in this Category</h5>
+    </div>
+    <div class="card-body">
+        <p>Found {{ category.tools|length }} tools in this category.</p>
+    </div>
+</div>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for tool in category.tools %}
+    <div class="col">
+        <div class="card h-100 {% if not tool.complete %}border-warning{% else %}shadow-sm{% endif %}">
+            {% if not tool.complete %}
+            <div class="card-header bg-warning text-dark">
+                <span class="badge bg-warning text-dark">⚠️ Incomplete</span>
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ tool.name }}</h5>
+                <div class="mb-3">
+                    <span class="badge bg-secondary">{{ format_size(tool.file_size) }}</span>
+                    <span class="badge bg-secondary">Updated: {{ tool.mod_date }}</span>
+                </div>
+                <p class="card-text" id="summary-{{ tool.directory }}">Loading description...</p>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        {% if tool.guide %}
+                        <a href="/docs/{{ tool.guide_path }}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                            <i class="fas fa-book me-1"></i> Guide
+                        </a>
+                        {% endif %}
+                    </div>
+                    <a href="/tool/{{ tool.relative_path }}" class="btn btn-primary">
+                        <i class="fas fa-chevron-right me-1"></i> View Tool
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Load tool summaries asynchronously
+    document.addEventListener('DOMContentLoaded', function() {
+        {% for tool in category.tools %}
+        fetch('/docs/{{ tool.relative_path }}')
+            .then(response => response.json())
+            .then(data => {
+                const summaryEl = document.getElementById('summary-{{ tool.directory }}');
+                if (summaryEl) {
+                    if (data.error) {
+                        summaryEl.textContent = 'No description available.';
+                    } else {
+                        summaryEl.textContent = data.summary || 'A Python utility tool.';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching tool summary:', error);
+                const summaryEl = document.getElementById('summary-{{ tool.directory }}');
+                if (summaryEl) {
+                    summaryEl.textContent = 'A Python utility tool.';
+                }
+            });
+        {% endfor %}
+        
+        // Update category icon
+        const categoryIcon = document.querySelector('.category-icon i');
+        if (categoryIcon) {
+            const category = '{{ category.name }}';
+            const icons = {
+                'automation': 'robot',
+                'creative': 'paint-brush',
+                'data_processing': 'database',
+                'dev_tools': 'code',
+                'education': 'graduation-cap',
+                'file_management': 'folder',
+                'finance': 'chart-line',
+                'gaming': 'gamepad',
+                'hardware_iot': 'microchip',
+                'multimedia': 'photo-video',
+                'networking': 'network-wired',
+                'security': 'shield-alt',
+                'system_tools': 'desktop',
+                'utility': 'tools',
+                'web_api_tools': 'globe'
+            };
+            categoryIcon.className = `fas fa-${icons[category] || 'folder'} fa-2x text-primary`;
+        }
+    });
+</script>
+{% endblock %}
