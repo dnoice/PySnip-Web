@@ -1,0 +1,488 @@
+{% extends "base.html" %}
+
+{% block title %}PySnip Explorer Mobile{% endblock %}
+
+{% block extra_css %}
+<style>
+    .mobile-container {
+        padding: 1rem;
+    }
+    
+    .mobile-category-card {
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .mobile-category-card:active {
+        transform: scale(0.98);
+    }
+    
+    .mobile-category-header {
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        background: linear-gradient(135deg, var(--bg-elevated), var(--bg-tertiary));
+        border-left: 4px solid var(--accent-primary);
+    }
+    
+    .mobile-category-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background-color: var(--accent-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+    }
+    
+    .mobile-category-title {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .mobile-tools-container {
+        padding: 0.5rem;
+        background-color: var(--bg-secondary);
+    }
+    
+    .mobile-tool-item {
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background-color: var(--bg-tertiary);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: background-color 0.2s ease;
+    }
+    
+    .mobile-tool-item:active {
+        background-color: var(--accent-soft);
+    }
+    
+    .mobile-tool-info {
+        flex: 1;
+    }
+    
+    .mobile-tool-name {
+        margin: 0;
+        font-weight: 500;
+    }
+    
+    .mobile-tool-status {
+        margin-left: auto;
+        margin-right: 0.5rem;
+    }
+    
+    .mobile-search {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 1rem;
+        background-color: var(--bg-secondary);
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .mobile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+    
+    .mobile-logo {
+        display: flex;
+        align-items: center;
+    }
+    
+    .mobile-logo-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+    }
+    
+    .mobile-title {
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .mobile-info-box {
+        background-color: var(--bg-tertiary);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .mobile-info-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .mobile-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .mobile-stat {
+        flex: 1;
+        min-width: calc(50% - 0.75rem);
+        background-color: var(--bg-elevated);
+        border-radius: 8px;
+        padding: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .mobile-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent-primary);
+    }
+    
+    .mobile-stat-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+    
+    .mobile-recent {
+        margin-bottom: 1.5rem;
+    }
+    
+    .mobile-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+    
+    .mobile-section-title {
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .mobile-recent-list {
+        background-color: var(--bg-tertiary);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .mobile-recent-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+    }
+    
+    .mobile-recent-item:last-child {
+        border-bottom: none;
+    }
+    
+    .mobile-recent-icon {
+        margin-right: 0.75rem;
+        color: var(--accent-primary);
+    }
+    
+    .mobile-recent-info {
+        flex: 1;
+    }
+    
+    .mobile-recent-name {
+        font-weight: 500;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+    
+    .mobile-recent-category {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+    
+    .mobile-button {
+        background-color: var(--bg-elevated);
+        color: var(--text-primary);
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        transition: all 0.2s ease;
+    }
+    
+    .mobile-button:active {
+        transform: translateY(2px);
+    }
+    
+    .mobile-button-accent {
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: white;
+    }
+    
+    .mobile-quick-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .mobile-quick-action {
+        flex: 1;
+        min-width: calc(50% - 0.75rem);
+        background-color: var(--bg-tertiary);
+        border-radius: 12px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .mobile-quick-action-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 25px;
+        background-color: var(--accent-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.75rem;
+        color: var(--accent-primary);
+        font-size: 1.5rem;
+    }
+    
+    .mobile-quick-action-title {
+        font-weight: 600;
+        margin: 0;
+        margin-bottom: 0.25rem;
+    }
+    
+    .mobile-quick-action-desc {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+    
+    .mobile-footer {
+        text-align: center;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mobile-container">
+    <!-- Header -->
+    <div class="mobile-header">
+        <div class="mobile-logo">
+            <div class="mobile-logo-icon">
+                <i class="fas fa-terminal text-white"></i>
+            </div>
+            <h1 class="mobile-title">PySnip Explorer</h1>
+        </div>
+        <button id="theme-toggle-mobile" class="mobile-button">
+            <i class="fas fa-moon me-2"></i>Theme
+        </button>
+    </div>
+    
+    <!-- Search Bar -->
+    <div class="mobile-search">
+        <form action="/search" method="get">
+            <div class="input-group">
+                <span class="input-group-text bg-dark border-0">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input class="form-control search-input" type="search" name="q" placeholder="Search tools..." aria-label="Search">
+                <button class="btn btn-accent" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Stats Box -->
+    <div class="mobile-info-box">
+        <h3 class="mobile-info-title">Collection Stats</h3>
+        <div class="mobile-stats">
+            <div class="mobile-stat">
+                <div class="mobile-stat-value" id="toolsCount">{{ catalog.tools_count }}</div>
+                <div class="mobile-stat-label">Tools</div>
+            </div>
+            <div class="mobile-stat">
+                <div class="mobile-stat-value" id="categoriesCount">{{ catalog.categories|length }}</div>
+                <div class="mobile-stat-label">Categories</div>
+            </div>
+            <div class="mobile-stat">
+                <div class="mobile-stat-value" id="completedCount">{{ get_completed_count(catalog) }}</div>
+                <div class="mobile-stat-label">Completed</div>
+            </div>
+            <div class="mobile-stat">
+                <div class="mobile-stat-value" id="lastUpdated">{{ get_days_since_update(catalog) }}</div>
+                <div class="mobile-stat-label">Days Since Update</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="mobile-quick-actions">
+        <a href="/random" class="mobile-quick-action">
+            <div class="mobile-quick-action-icon">
+                <i class="fas fa-random"></i>
+            </div>
+            <h4 class="mobile-quick-action-title">Random Tool</h4>
+            <p class="mobile-quick-action-desc">Discover something new</p>
+        </a>
+        <a href="/stats" class="mobile-quick-action">
+            <div class="mobile-quick-action-icon">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <h4 class="mobile-quick-action-title">Statistics</h4>
+            <p class="mobile-quick-action-desc">View detailed stats</p>
+        </a>
+    </div>
+    
+    <!-- Recent Tools -->
+    <div class="mobile-recent">
+        <div class="mobile-section-header">
+            <h3 class="mobile-section-title">
+                <i class="fas fa-history text-accent me-2"></i>Recently Updated
+            </h3>
+            <a href="/updates" class="mobile-button">
+                <i class="fas fa-arrow-right me-1"></i>All
+            </a>
+        </div>
+        <div class="mobile-recent-list">
+            {% for tool in get_recent_tools(catalog, 5) %}
+            <a href="/tool/{{ tool.relative_path }}" class="mobile-recent-item">
+                <div class="mobile-recent-icon">
+                    <i class="fas fa-{{ get_tool_icon(tool) }}"></i>
+                </div>
+                <div class="mobile-recent-info">
+                    <h4 class="mobile-recent-name">{{ tool.name }}</h4>
+                    <div class="mobile-recent-category">{{ tool.category|replace('_', ' ')|title }}</div>
+                </div>
+                <span class="badge {% if tool.complete %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                    {% if tool.complete %}✓{% else %}⋯{% endif %}
+                </span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Categories -->
+    <div class="mobile-section-header">
+        <h3 class="mobile-section-title">
+            <i class="fas fa-th-large text-accent me-2"></i>Categories
+        </h3>
+    </div>
+    
+    {% for category in catalog.categories %}
+    <div class="mobile-category-card">
+        <div class="mobile-category-header" data-bs-toggle="collapse" data-bs-target="#category-{{ category.name }}">
+            <div class="mobile-category-icon">
+                <i class="fas fa-{{ get_category_icon(category.name) }} text-accent"></i>
+            </div>
+            <h3 class="mobile-category-title">{{ category.display_name }}</h3>
+            <div class="ms-auto">
+                <span class="badge bg-accent-soft">{{ category.tools|length }}</span>
+            </div>
+            <i class="fas fa-chevron-down ms-2"></i>
+        </div>
+        <div class="collapse" id="category-{{ category.name }}">
+            <div class="mobile-tools-container">
+                {% for tool in category.tools %}
+                <a href="/tool/{{ tool.relative_path }}" class="mobile-tool-item">
+                    <i class="fas fa-{{ get_tool_icon(tool) }} text-accent me-2"></i>
+                    <div class="mobile-tool-info">
+                        <h4 class="mobile-tool-name">{{ tool.name }}</h4>
+                    </div>
+                    <span class="mobile-tool-status badge {% if tool.complete %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                        {% if tool.complete %}Complete{% else %}In Progress{% endif %}
+                    </span>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    
+    <!-- Footer -->
+    <div class="mobile-footer">
+        <p>© 2025 PySnip Explorer | Version 1.0.0</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle theme toggle
+        const themeToggleBtn = document.getElementById('theme-toggle-mobile');
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener('click', function() {
+                const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                // Save theme preference
+                localStorage.setItem('theme', newTheme);
+                
+                // Apply theme
+                document.documentElement.setAttribute('data-bs-theme', newTheme);
+                
+                // Update button icon
+                const iconElement = themeToggleBtn.querySelector('i');
+                if (iconElement) {
+                    iconElement.className = newTheme === 'dark' ? 'fas fa-moon me-2' : 'fas fa-sun me-2';
+                }
+            });
+            
+            // Set initial icon based on current theme
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            const iconElement = themeToggleBtn.querySelector('i');
+            if (iconElement) {
+                iconElement.className = currentTheme === 'dark' ? 'fas fa-moon me-2' : 'fas fa-sun me-2';
+            }
+        }
+        
+        // Animate stat counters
+        function animateCounter(element, target, duration = 2000) {
+            let start = 0;
+            const increment = target / (duration / 16);
+            const timer = setInterval(() => {
+                start += increment;
+                element.textContent = Math.floor(start);
+                if (start >= target) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                }
+            }, 16);
+        }
+        
+        // Initialize counters
+        const toolsCount = document.getElementById('toolsCount');
+        const categoriesCount = document.getElementById('categoriesCount');
+        const completedCount = document.getElementById('completedCount');
+        
+        if (toolsCount) animateCounter(toolsCount, {{ catalog.tools_count }});
+        if (categoriesCount) animateCounter(categoriesCount, {{ catalog.categories|length }});
+        if (completedCount) animateCounter(completedCount, {{ get_completed_count(catalog) }});
+    });
+</script>
+{% endblock %}
