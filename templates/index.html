@@ -1,0 +1,619 @@
+{% extends "base.html" %}
+
+{% block title %}PySnip Explorer - Python Utility Collection{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        position: relative;
+        background: linear-gradient(135deg, #1a1f25 0%, #17212b 100%);
+        overflow: hidden;
+        padding: 5rem 0;
+        margin-bottom: 3rem;
+        border-radius: 12px;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            radial-gradient(circle at 20% 30%, rgba(76, 161, 255, 0.2) 0%, transparent 40%),
+            radial-gradient(circle at 80% 70%, rgba(28, 216, 210, 0.2) 0%, transparent 40%);
+    }
+    
+    .hero-section .code-bg {
+        position: absolute;
+        right: -5%;
+        top: 10%;
+        opacity: 0.06;
+        font-family: monospace;
+        font-size: 1.2rem;
+        transform: rotate(5deg);
+        user-select: none;
+    }
+    
+    .hero-cta {
+        margin-top: 2rem;
+    }
+    
+    .gradient-heading {
+        background: linear-gradient(90deg, #4ca1ff, #1cd8d2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        color: transparent;
+    }
+    
+    .category-card {
+        transition: all 0.3s ease;
+        border: none;
+        height: 100%;
+    }
+    
+    .category-card:hover {
+        transform: translateY(-10px);
+    }
+    
+    .category-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, rgba(76, 161, 255, 0.1) 0%, rgba(28, 216, 210, 0.1) 100%);
+    }
+    
+    .stat-card {
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        height: 100%;
+    }
+    
+    .stat-card .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(76, 161, 255, 0.2) 0%, rgba(28, 216, 210, 0.2) 100%);
+        color: white;
+    }
+    
+    .stat-card .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0.5rem 0;
+        background: linear-gradient(90deg, #4ca1ff, #1cd8d2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        color: transparent;
+    }
+    
+    .featured-tools {
+        margin-top: 3rem;
+    }
+    
+    .featured-tools .tool-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+    }
+    
+    .tool-card {
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .tool-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .tool-card .card-body {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .tool-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, #4ca1ff, #1cd8d2);
+        transform: scaleX(0);
+        transform-origin: bottom right;
+        transition: transform 0.3s ease;
+    }
+    
+    .tool-card:hover::after {
+        transform: scaleX(1);
+        transform-origin: bottom left;
+    }
+    
+    .quick-action-card {
+        position: relative;
+        overflow: hidden;
+        border: none;
+        border-radius: 12px;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-action-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .quick-action-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(76, 161, 255, 0.1) 0%, rgba(28, 216, 210, 0.1) 100%);
+        z-index: -1;
+    }
+    
+    .category-info {
+        transition: all 0.3s ease;
+    }
+    
+    .category-info:hover {
+        transform: translateY(-5px);
+    }
+    
+    .recent-tool-list {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    
+    .recent-tool-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .recent-tool-list::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+    }
+    
+    .recent-tool-list::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+    }
+    
+    .recent-tool-list::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .category-filters {
+        margin-bottom: 2rem;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 0.5rem;
+    }
+    
+    .category-filter-btn {
+        margin-right: 0.5rem;
+        border-radius: 30px;
+        padding: 0.5rem 1rem;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+    
+    .category-filter-btn.active {
+        background: linear-gradient(90deg, #4ca1ff, #1cd8d2);
+        border-color: transparent;
+        color: white;
+    }
+    
+    @media (max-width: 767.98px) {
+        .hero-section {
+            padding: 3rem 0;
+        }
+        
+        .hero-section .code-bg {
+            display: none;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section" data-aos="fade-up">
+    <div class="container position-relative">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1 class="display-4 fw-bold text-white mb-3">Discover the Power of <span class="gradient-heading">PySnip</span></h1>
+                <p class="lead text-light mb-4">An extensive collection of {{ catalog.tools_count }} Python utilities organized across {{ catalog.categories|length }} categories. Browse, learn, and execute tools directly from this web interface.</p>
+                <div class="hero-cta d-flex flex-wrap gap-3">
+                    <a href="#categories" class="btn btn-accent btn-lg">
+                        <i class="fas fa-th-large me-2"></i>Browse Categories
+                    </a>
+                    <a href="/random" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-random me-2"></i>Random Tool
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block">
+                <pre class="code-bg text-light">
+#!/usr/bin/env python3
+"""
+PySnip - A collection of powerful
+Python utilities for everyday tasks.
+"""
+
+class PySnip:
+    def __init__(self):
+        self.tools = []
+        self.categories = []
+        
+    def discover(self):
+        """Find all available tools."""
+        for category in self.categories:
+            tools = category.get_tools()
+            self.tools.extend(tools)
+        
+    def execute(self, tool_name, **params):
+        """Execute a specific tool."""
+        tool = self.find_tool(tool_name)
+        return tool.run(**params)
+
+# Initialize PySnip
+pysnip = PySnip()
+pysnip.discover()
+pysnip.execute('graph_plotter', 
+               mode='scatter',
+               file='data.csv')
+</pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section mb-5" data-aos="fade-up" data-aos-delay="100">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon">
+                            <i class="fas fa-tools fa-lg"></i>
+                        </div>
+                        <div class="ms-3">
+                            <div class="stat-value" id="toolsCount">{{ catalog.tools_count }}</div>
+                            <p class="text-muted mb-0">Tools</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon">
+                            <i class="fas fa-th-large fa-lg"></i>
+                        </div>
+                        <div class="ms-3">
+                            <div class="stat-value" id="categoriesCount">{{ catalog.categories|length }}</div>
+                            <p class="text-muted mb-0">Categories</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon">
+                            <i class="fas fa-code fa-lg"></i>
+                        </div>
+                        <div class="ms-3">
+                            <div class="stat-value" id="completedCount">{{ get_completed_count(catalog) }}</div>
+                            <p class="text-muted mb-0">Completed</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock fa-lg"></i>
+                        </div>
+                        <div class="ms-3">
+                            <div class="stat-value" id="lastUpdated">{{ get_days_since_update(catalog) }}</div>
+                            <p class="text-muted mb-0">Days Since Update</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section id="categories" class="mb-5" data-aos="fade-up" data-aos-delay="200">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h2 class="fw-bold"><i class="fas fa-th-large text-accent me-2"></i>Categories</h2>
+            <a href="/categories" class="btn btn-sm btn-outline-accent">View All</a>
+        </div>
+        
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for category in catalog.categories %}
+            <div class="col" data-aos="fade-up" data-aos-delay="{{ loop.index * 50 }}">
+                <div class="card category-card h-100 bg-dark" data-category="{{ category.name }}">
+                    <div class="card-body">
+                        <div class="category-icon-wrapper">
+                            <i class="fas fa-{{ get_category_icon(category.name) }} fa-2x text-accent"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">{{ category.display_name }}</h5>
+                        <p class="card-text text-muted">{{ category.description|truncate(100) }}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="badge bg-accent-soft">{{ category.tools|length }} tools</span>
+                            <a href="/category/{{ category.path }}" class="btn btn-sm btn-accent">
+                                <i class="fas fa-arrow-right me-1"></i>Explore
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Tools Section -->
+<section class="featured-tools mb-5" data-aos="fade-up" data-aos-delay="300">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h2 class="fw-bold"><i class="fas fa-star text-accent me-2"></i>Featured Tools</h2>
+            <div class="category-filters">
+                <button class="btn btn-sm btn-outline-accent category-filter-btn active" data-filter="all">All</button>
+                {% for category in get_top_categories(catalog, 5) %}
+                <button class="btn btn-sm btn-outline-accent category-filter-btn" data-filter="{{ category.name }}">{{ category.display_name }}</button>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 featured-tools-container">
+            {% for tool in get_featured_tools(catalog, 6) %}
+            <div class="col featured-tool-item" data-category="{{ tool.category }}" data-aos="fade-up" data-aos-delay="{{ loop.index * 50 }}">
+                <div class="card tool-card bg-dark h-100">
+                    <span class="badge bg-accent tool-badge">Featured</span>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="tool-icon-wrapper me-3">
+                                <i class="fas fa-{{ get_tool_icon(tool) }} text-accent"></i>
+                            </div>
+                            <h5 class="card-title mb-0 fw-bold">{{ tool.name }}</h5>
+                        </div>
+                        <p class="card-text text-muted">{{ get_tool_description(tool)|truncate(100) }}</p>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="badge bg-secondary">{{ tool.category|replace('_', ' ')|title }}</span>
+                            <span class="badge {% if tool.complete %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                                {% if tool.complete %}Complete{% else %}In Progress{% endif %}
+                            </span>
+                        </div>
+                        <a href="/tool/{{ tool.relative_path }}" class="btn btn-sm btn-outline-accent w-100">
+                            <i class="fas fa-chevron-right me-1"></i>View Tool
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Recent Updates & Quick Actions -->
+<section class="mb-5" data-aos="fade-up" data-aos-delay="400">
+    <div class="container">
+        <div class="row">
+            <!-- Recent Updates -->
+            <div class="col-lg-8 mb-4 mb-lg-0">
+                <div class="card bg-dark h-100">
+                    <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold"><i class="fas fa-history text-accent me-2"></i>Recently Updated</h5>
+                        <a href="/updates" class="btn btn-sm btn-outline-accent">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive recent-tool-list">
+                            <table class="table table-dark table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Tool</th>
+                                        <th>Category</th>
+                                        <th>Updated</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for tool in get_recent_tools(catalog, 10) %}
+                                    <tr>
+                                        <td>
+                                            <a href="/tool/{{ tool.relative_path }}" class="text-decoration-none text-reset fw-bold">
+                                                <i class="fas fa-{{ get_tool_icon(tool) }} text-accent me-2"></i>{{ tool.name }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a href="/category/{{ tool.category }}" class="text-decoration-none text-reset">{{ tool.category|replace('_', ' ')|title }}</a>
+                                        </td>
+                                        <td>{{ tool.mod_date }}</td>
+                                        <td>
+                                            <span class="badge {% if tool.complete %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                                                {% if tool.complete %}Complete{% else %}In Progress{% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="/tool/{{ tool.relative_path }}" class="btn btn-sm btn-accent">View</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="col-lg-4">
+                <div class="d-flex flex-column h-100 gap-4">
+                    <div class="card quick-action-card bg-dark">
+                        <div class="card-body">
+                            <h5 class="fw-bold"><i class="fas fa-random text-accent me-2"></i>Random Tool</h5>
+                            <p class="text-muted">Discover a random tool from our collection. You might find something useful!</p>
+                            <a href="/random" class="btn btn-accent w-100">
+                                <i class="fas fa-dice me-1"></i>Feel Lucky
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="card quick-action-card bg-dark">
+                        <div class="card-body">
+                            <h5 class="fw-bold"><i class="fas fa-chart-pie text-accent me-2"></i>Collection Stats</h5>
+                            <p class="text-muted">View detailed statistics about the PySnip collection.</p>
+                            <a href="/stats" class="btn btn-accent w-100">
+                                <i class="fas fa-chart-bar me-1"></i>View Stats
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="card quick-action-card bg-dark">
+                        <div class="card-body">
+                            <h5 class="fw-bold"><i class="fas fa-graduation-cap text-accent me-2"></i>Getting Started</h5>
+                            <p class="text-muted">Learn how to use the PySnip collection with our detailed guide.</p>
+                            <a href="/guide" class="btn btn-accent w-100">
+                                <i class="fas fa-book me-1"></i>Read Guide
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Counter animation
+        function animateCounter(element, target, duration = 2000) {
+            let start = 0;
+            const increment = target / (duration / 16);
+            const timer = setInterval(() => {
+                start += increment;
+                element.textContent = Math.floor(start);
+                if (start >= target) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                }
+            }, 16);
+        }
+        
+        // Initialize counters when elements are visible
+        const toolsCount = document.getElementById('toolsCount');
+        const categoriesCount = document.getElementById('categoriesCount');
+        const completedCount = document.getElementById('completedCount');
+        
+        // Animate counters using Intersection Observer
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    if (entry.target.id === 'toolsCount') {
+                        animateCounter(entry.target, {{ catalog.tools_count }});
+                    } else if (entry.target.id === 'categoriesCount') {
+                        animateCounter(entry.target, {{ catalog.categories|length }});
+                    } else if (entry.target.id === 'completedCount') {
+                        animateCounter(entry.target, {{ get_completed_count(catalog) }});
+                    }
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+        
+        observer.observe(toolsCount);
+        observer.observe(categoriesCount);
+        observer.observe(completedCount);
+        
+        // Category filter functionality
+        const filterButtons = document.querySelectorAll('.category-filter-btn');
+        const featuredTools = document.querySelectorAll('.featured-tool-item');
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Update active button
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Filter tools
+                const filter = button.getAttribute('data-filter');
+                featuredTools.forEach(tool => {
+                    if (filter === 'all' || tool.getAttribute('data-category') === filter) {
+                        tool.style.display = 'block';
+                    } else {
+                        tool.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Update category icons with appropriate Font Awesome icons
+        document.querySelectorAll('.category-card').forEach(card => {
+            const category = card.getAttribute('data-category');
+            const iconElement = card.querySelector('.category-icon-wrapper i');
+            const icon = getCategoryIcon(category);
+            if (iconElement) {
+                iconElement.className = `fas fa-${icon} fa-2x text-accent`;
+            }
+        });
+    });
+    
+    function getCategoryIcon(category) {
+        const icons = {
+            'automation': 'robot',
+            'creative': 'paint-brush',
+            'data_processing': 'database',
+            'dev_tools': 'code',
+            'education': 'graduation-cap',
+            'file_management': 'folder',
+            'finance': 'chart-line',
+            'gaming': 'gamepad',
+            'hardware_iot': 'microchip',
+            'multimedia': 'photo-video',
+            'networking': 'network-wired',
+            'security': 'shield-alt',
+            'system_tools': 'desktop',
+            'utility': 'tools',
+            'web_api_tools': 'globe'
+        };
+        return icons[category] || 'puzzle-piece';
+    }
+</script>
+{% endblock %}
