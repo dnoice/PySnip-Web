@@ -1,7 +1,7 @@
 # PySnip-Web: The Visual Gateway to PySnip Tools
 
 <p align="center">
-  <img src="assets/images/pysnip.png" alt="PySnip Banner" width="600">
+  <img src="assets/images/pysnip_web.png" alt="PySnip Banner" width="500">
   <br>
   <em>"Snippets With Attitude"</em>
 </p>
