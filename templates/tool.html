@@ -1,0 +1,838 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tool.name }} - PySnip{% endblock %}
+
+{% block extra_css %}
+<style>
+    .terminal {
+        background-color: #1e1e1e;
+        color: #f0f0f0;
+        padding: 1rem;
+        border-radius: 5px;
+        font-family: 'Courier New', monospace;
+        overflow-x: auto;
+        white-space: pre-wrap;
+    }
+    
+    .command {
+        color: #69c;
+        font-weight: bold;
+    }
+    
+    .error {
+        color: #f55;
+    }
+    
+    .success {
+        color: #5f5;
+    }
+    
+    .param-form {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .nav-tabs .nav-link {
+        cursor: pointer;
+    }
+    
+    .spinner-border {
+        display: none;
+    }
+    
+    .running .spinner-border {
+        display: inline-block;
+    }
+    
+    code {
+        font-family: 'Courier New', monospace;
+        background-color: #f8f9fa;
+        padding: 0.2rem 0.4rem;
+        border-radius: 3px;
+    }
+    
+    .documentation h2, .documentation h3 {
+        margin-top: 1.5rem;
+    }
+    
+    .documentation ul {
+        padding-left: 1.5rem;
+    }
+    
+    /* Style for parameter form */
+    .parameter-card {
+        margin-bottom: 0.5rem;
+        background-color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .parameter-card .card-header {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+    }
+    
+    .parameter-card .card-body {
+        padding: 1rem;
+    }
+    
+    #execute-status {
+        display: none;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item"><a href="/category/{{ tool.category }}">{{ tool.category|replace('_', ' ')|title }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ tool.name }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex align-items-center mb-4">
+    <div class="tool-icon me-3">
+        <i class="fas fa-file-code fa-2x text-primary"></i>
+    </div>
+    <h1>{{ tool.name }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Tool information and execution interface -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="toolTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="execution-tab" data-bs-toggle="tab" data-bs-target="#execution" 
+                                type="button" role="tab" aria-controls="execution" aria-selected="true">
+                            <i class="fas fa-play me-2"></i>Execution
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="documentation-tab" data-bs-toggle="tab" data-bs-target="#documentation" 
+                                type="button" role="tab" aria-controls="documentation" aria-selected="false">
+                            <i class="fas fa-book me-2"></i>Documentation
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="source-tab" data-bs-toggle="tab" data-bs-target="#source" 
+                                type="button" role="tab" aria-controls="source" aria-selected="false">
+                            <i class="fas fa-code me-2"></i>Source Code
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="toolTabsContent">
+                    <!-- Execution Tab -->
+                    <div class="tab-pane fade show active" id="execution" role="tabpanel" aria-labelledby="execution-tab">
+                        <h5 class="card-title">Run {{ tool.name }}</h5>
+                        
+                        {% if not tool.complete %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Note:</strong> This tool appears to be incomplete or under development.
+                        </div>
+                        {% endif %}
+                        
+                        <div class="param-form" id="parameters-form">
+                            <h6 class="mb-3">Parameters</h6>
+                            <div id="param-cards">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2">Loading parameters...</p>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                <button type="button" class="btn btn-secondary" id="reset-params">
+                                    <i class="fas fa-undo me-2"></i>Reset
+                                </button>
+                                <button type="button" class="btn btn-primary" id="execute-button">
+                                    <i class="fas fa-play me-2"></i>Execute Tool
+                                </button>
+                            </div>
+                            
+                            <div class="alert" id="execute-status" role="alert"></div>
+                        </div>
+                        
+                        <div class="execution-results">
+                            <h6 class="mb-3">Execution Results</h6>
+                            <div class="card">
+                                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                                    <span>
+                                        <i class="fas fa-terminal me-2"></i>Output
+                                    </span>
+                                    <button class="btn btn-sm btn-outline-light" id="copy-output" title="Copy to clipboard">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="terminal" id="output-container">
+                                        <div class="text-center py-4 text-muted">
+                                            <i class="fas fa-terminal fa-3x mb-3"></i>
+                                            <p>Execute the tool to see results here</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Documentation Tab -->
+                    <div class="tab-pane fade" id="documentation" role="tabpanel" aria-labelledby="documentation-tab">
+                        <div class="documentation" id="doc-container">
+                            <div class="text-center py-4">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Loading documentation...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Source Code Tab -->
+                    <div class="tab-pane fade" id="source" role="tabpanel" aria-labelledby="source-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0">Source Code</h5>
+                            <button class="btn btn-sm btn-outline-primary" id="copy-source" title="Copy source code">
+                                <i class="fas fa-copy me-1"></i>Copy
+                            </button>
+                        </div>
+                        <div id="source-container" class="p-0">
+                            <div class="text-center py-4">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Loading source code...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Tool sidebar information -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Tool Information</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Category
+                        <span class="badge bg-primary rounded-pill">{{ tool.category|replace('_', ' ')|title }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Last Updated
+                        <span class="badge bg-secondary rounded-pill">{{ tool.mod_date }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        File Size
+                        <span class="badge bg-secondary rounded-pill">{{ format_size(tool.file_size) }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Status
+                        {% if tool.complete %}
+                        <span class="badge bg-success rounded-pill">Complete</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark rounded-pill">Incomplete</span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        {% if tool.guide %}
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">Documentation</h5>
+            </div>
+            <div class="card-body">
+                <p>This tool has a detailed guide available.</p>
+                <a href="/docs/{{ tool.guide_path }}" class="btn btn-success w-100" target="_blank">
+                    <i class="fas fa-book me-2"></i>View Guide
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">Related Tools</h5>
+            </div>
+            <div class="card-body">
+                <div id="related-tools">
+                    <div class="text-center py-2">
+                        <div class="spinner-border spinner-border-sm" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading related tools...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Tool ID and path
+    const toolPath = '{{ tool.relative_path }}';
+    const toolDir = '{{ tool.directory }}';
+    const toolCategory = '{{ tool.category }}';
+    
+    // DOM elements
+    const paramCardsContainer = document.getElementById('param-cards');
+    const outputContainer = document.getElementById('output-container');
+    const executeButton = document.getElementById('execute-button');
+    const resetParamsButton = document.getElementById('reset-params');
+    const executeStatus = document.getElementById('execute-status');
+    const copyOutputButton = document.getElementById('copy-output');
+    const copySourceButton = document.getElementById('copy-source');
+    const docContainer = document.getElementById('doc-container');
+    const sourceContainer = document.getElementById('source-container');
+    const relatedToolsContainer = document.getElementById('related-tools');
+    
+    // Fetch and display documentation
+    async function loadDocumentation() {
+        try {
+            const response = await fetch(`/docs/${toolPath}`);
+            const data = await response.json();
+            
+            if (data.error) {
+                docContainer.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${data.error}
+                    </div>
+                    <p>No documentation available for this tool.</p>
+                `;
+                return;
+            }
+            
+            let docHtml = `<h2>${data.title || '{{ tool.name }}'}</h2>`;
+            
+            if (data.summary) {
+                docHtml += `<p class="lead">${data.summary}</p>`;
+            }
+            
+            // Add key sections
+            const keySections = data.key_sections || {};
+            
+            if (keySections['Description']) {
+                docHtml += `
+                    <h3>Description</h3>
+                    <div>${formatDocText(keySections['Description'])}</div>
+                `;
+            }
+            
+            if (keySections['Key Features']) {
+                docHtml += `
+                    <h3>Key Features</h3>
+                    <div>${formatDocText(keySections['Key Features'])}</div>
+                `;
+            }
+            
+            if (keySections['Usage Instructions']) {
+                docHtml += `
+                    <h3>Usage Instructions</h3>
+                    <div>${formatDocText(keySections['Usage Instructions'])}</div>
+                `;
+            }
+            
+            if (keySections['Examples']) {
+                docHtml += `
+                    <h3>Examples</h3>
+                    <div>${formatDocText(keySections['Examples'])}</div>
+                `;
+            }
+            
+            if (keySections['Command-Line Arguments']) {
+                docHtml += `
+                    <h3>Command-Line Arguments</h3>
+                    <div>${formatDocText(keySections['Command-Line Arguments'])}</div>
+                `;
+            }
+            
+            if (keySections['Other Important Information']) {
+                docHtml += `
+                    <h3>Additional Information</h3>
+                    <div>${formatDocText(keySections['Other Important Information'])}</div>
+                `;
+            }
+            
+            // Add other sections
+            const otherSections = Object.entries(data.sections || {}).filter(([key]) => 
+                !['Description', 'Key Features', 'Usage Instructions', 'Examples', 'Command-Line Arguments', 'Other Important Information'].includes(key)
+            );
+            
+            for (const [title, content] of otherSections) {
+                if (content.trim()) {
+                    docHtml += `
+                        <h3>${title}</h3>
+                        <div>${formatDocText(content)}</div>
+                    `;
+                }
+            }
+            
+            docContainer.innerHTML = docHtml;
+            
+            // Syntax highlighting for code blocks
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+            
+        } catch (error) {
+            console.error('Error loading documentation:', error);
+            docContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Error loading documentation: ${error.message}
+                </div>
+            `;
+        }
+    }
+    
+    // Format documentation text
+    function formatDocText(text) {
+        if (!text) return '';
+        
+        // Format code blocks
+        text = text.replace(/```([a-z]*)\n([\s\S]*?)\n```/g, (match, language, code) => {
+            return `<pre><code class="language-${language || 'bash'}">${escapeHtml(code.trim())}</code></pre>`;
+        });
+        
+        // Format inline code
+        text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+        
+        // Convert line breaks to paragraphs/lists
+        let formatted = '';
+        let inList = false;
+        
+        const lines = text.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            
+            if (!line) {
+                if (inList) {
+                    formatted += '</ul>';
+                    inList = false;
+                }
+                formatted += '<br>';
+                continue;
+            }
+            
+            // Handle bullet points
+            if (line.match(/^[-*•]\s+/)) {
+                if (!inList) {
+                    formatted += '<ul>';
+                    inList = true;
+                }
+                formatted += `<li>${line.replace(/^[-*•]\s+/, '')}</li>`;
+            } 
+            // Handle numbered lists
+            else if (line.match(/^\d+\.\s+/)) {
+                if (!inList) {
+                    formatted += '<ol>';
+                    inList = true;
+                }
+                formatted += `<li>${line.replace(/^\d+\.\s+/, '')}</li>`;
+            }
+            // Regular line
+            else {
+                if (inList) {
+                    formatted += '</ul>';
+                    inList = false;
+                }
+                formatted += `<p>${line}</p>`;
+            }
+        }
+        
+        if (inList) {
+            formatted += '</ul>';
+        }
+        
+        return formatted;
+    }
+    
+    // Escape HTML special characters
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+    
+    // Fetch and display source code
+    async function loadSourceCode() {
+        try {
+            const response = await fetch(`/source/${toolPath}`);
+            const data = await response.json();
+            
+            if (data.error) {
+                sourceContainer.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${data.error}
+                    </div>
+                `;
+                return;
+            }
+            
+            sourceContainer.innerHTML = `<pre><code class="language-python">${escapeHtml(data.source)}</code></pre>`;
+            
+            // Apply syntax highlighting
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+            
+        } catch (error) {
+            console.error('Error loading source code:', error);
+            sourceContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Error loading source code: ${error.message}
+                </div>
+            `;
+        }
+    }
+    
+    // Fetch and display parameters
+    async function loadParameters() {
+        try {
+            const response = await fetch(`/parameters/${toolPath}`);
+            const data = await response.json();
+            
+            if (data.error) {
+                paramCardsContainer.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No parameters found or ${data.error}
+                    </div>
+                    <p>You can still execute this tool with default settings.</p>
+                `;
+                return;
+            }
+            
+            if (!data.parameters || data.parameters.length === 0) {
+                paramCardsContainer.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        This tool has no configurable parameters.
+                    </div>
+                    <p>You can execute it with default settings.</p>
+                `;
+                return;
+            }
+            
+            let paramHtml = '';
+            
+            data.parameters.forEach((param, index) => {
+                const paramId = `param-${param.clean_name}`;
+                const isFlag = param.type === 'bool' || param.default === 'True' || param.default === 'False';
+                
+                paramHtml += `
+                    <div class="card parameter-card">
+                        <div class="card-header d-flex justify-content-between align-items-center" 
+                             data-bs-toggle="collapse" data-bs-target="#${paramId}-collapse">
+                            <div>
+                                <span class="fw-bold">${param.name}</span>
+                                ${param.required ? '<span class="badge bg-danger ms-2">Required</span>' : ''}
+                            </div>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="collapse ${index === 0 ? 'show' : ''}" id="${paramId}-collapse">
+                            <div class="card-body">
+                                <p class="card-text">${param.help || 'No description available.'}</p>
+                                <div class="mb-3">
+                `;
+                
+                if (isFlag) {
+                    // Boolean flag
+                    const isChecked = param.default === 'True';
+                    paramHtml += `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="${paramId}" 
+                                   ${isChecked ? 'checked' : ''}>
+                            <label class="form-check-label" for="${paramId}">
+                                Enable this option
+                            </label>
+                        </div>
+                    `;
+                } else if (param.choices) {
+                    // Select from choices
+                    paramHtml += `
+                        <label for="${paramId}" class="form-label">Value:</label>
+                        <select class="form-select" id="${paramId}">
+                    `;
+                    
+                    param.choices.forEach(choice => {
+                        const isSelected = choice === param.default;
+                        paramHtml += `<option value="${choice}" ${isSelected ? 'selected' : ''}>${choice}</option>`;
+                    });
+                    
+                    paramHtml += `</select>`;
+                } else {
+                    // Text input
+                    paramHtml += `
+                        <label for="${paramId}" class="form-label">Value:</label>
+                        <input type="${param.type === 'int' || param.type === 'float' ? 'number' : 'text'}" 
+                               class="form-control" id="${paramId}" 
+                               value="${param.default || ''}" 
+                               placeholder="Enter value...">
+                    `;
+                }
+                
+                paramHtml += `
+                                </div>
+                                <div class="text-muted small">
+                                    <span class="me-2">Type: <code>${param.type}</code></span>
+                                    ${param.default ? `<span>Default: <code>${param.default}</code></span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            paramCardsContainer.innerHTML = paramHtml;
+            
+        } catch (error) {
+            console.error('Error loading parameters:', error);
+            paramCardsContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Error loading parameters: ${error.message}
+                </div>
+                <p>You can still try to execute the tool with default settings.</p>
+            `;
+        }
+    }
+    
+    // Execute the tool
+    async function executeTool() {
+        // Collect parameters
+        const params = {};
+        document.querySelectorAll('.parameter-card').forEach(card => {
+            const paramHeader = card.querySelector('.card-header');
+            const paramName = paramHeader.querySelector('.fw-bold').textContent;
+            const cleanName = paramName.replace(/^--/, '');
+            
+            const inputElement = card.querySelector('input, select');
+            if (!inputElement) return;
+            
+            if (inputElement.type === 'checkbox') {
+                params[paramName] = inputElement.checked;
+            } else if (inputElement.value) {
+                params[paramName] = inputElement.value;
+            }
+        });
+        
+        // Update UI for execution
+        executeButton.disabled = true;
+        executeButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Executing...';
+        
+        executeStatus.className = 'alert alert-info';
+        executeStatus.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Executing tool...';
+        executeStatus.style.display = 'block';
+        
+        outputContainer.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"></div><p class="mt-2">Executing tool, please wait...</p></div>';
+        
+        try {
+            const response = await fetch('/execute', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    tool_path: toolPath,
+                    params: params
+                })
+            });
+            
+            const result = await response.json();
+            
+            // Display results
+            let outputHtml = '';
+            
+            if (result.cmd) {
+                outputHtml += `<div class="command">$ ${escapeHtml(result.cmd)}</div>\n\n`;
+            }
+            
+            if (result.stdout) {
+                outputHtml += escapeHtml(result.stdout);
+            }
+            
+            if (result.stderr) {
+                outputHtml += `\n\n<div class="error">${escapeHtml(result.stderr)}</div>`;
+            }
+            
+            if (!result.stdout && !result.stderr) {
+                outputHtml += '<div class="text-muted">No output generated.</div>';
+            }
+            
+            outputContainer.innerHTML = outputHtml;
+            
+            // Update status
+            if (result.success) {
+                executeStatus.className = 'alert alert-success';
+                executeStatus.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i>
+                    Tool executed successfully in ${result.execution_time.toFixed(2)} seconds.
+                `;
+            } else {
+                executeStatus.className = 'alert alert-danger';
+                executeStatus.innerHTML = `
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Tool execution failed: ${result.error || 'Unknown error'}
+                `;
+            }
+            
+        } catch (error) {
+            console.error('Error executing tool:', error);
+            outputContainer.innerHTML = `<div class="error">Error executing tool: ${error.message}</div>`;
+            
+            executeStatus.className = 'alert alert-danger';
+            executeStatus.innerHTML = `
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Error: ${error.message}
+            `;
+        } finally {
+            // Reset UI
+            executeButton.disabled = false;
+            executeButton.innerHTML = '<i class="fas fa-play me-2"></i>Execute Tool';
+        }
+    }
+    
+    // Load related tools
+    async function loadRelatedTools() {
+        try {
+            const response = await fetch(`/related/${toolCategory}`);
+            const data = await response.json();
+            
+            if (!data.tools || data.tools.length === 0) {
+                relatedToolsContainer.innerHTML = `<p class="text-muted">No related tools found.</p>`;
+                return;
+            }
+            
+            let relatedHtml = `<ul class="list-group list-group-flush">`;
+            
+            // Filter out the current tool
+            const filteredTools = data.tools.filter(tool => 
+                tool.directory !== toolDir
+            ).slice(0, 5); // Limit to 5 tools
+            
+            if (filteredTools.length === 0) {
+                relatedToolsContainer.innerHTML = `<p class="text-muted">No other tools in this category.</p>`;
+                return;
+            }
+            
+            filteredTools.forEach(tool => {
+                relatedHtml += `
+                    <li class="list-group-item">
+                        <a href="/tool/${tool.relative_path}" class="text-decoration-none">
+                            ${tool.name}
+                        </a>
+                    </li>
+                `;
+            });
+            
+            relatedHtml += `</ul>`;
+            relatedHtml += `
+                <div class="mt-3">
+                    <a href="/category/${toolCategory}" class="btn btn-outline-info btn-sm w-100">
+                        View All in Category
+                    </a>
+                </div>
+            `;
+            
+            relatedToolsContainer.innerHTML = relatedHtml;
+            
+        } catch (error) {
+            console.error('Error loading related tools:', error);
+            relatedToolsContainer.innerHTML = `<p class="text-muted">Error loading related tools.</p>`;
+        }
+    }
+    
+    // Copy text to clipboard
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                console.log('Copied to clipboard');
+            })
+            .catch(err => {
+                console.error('Error copying to clipboard:', err);
+            });
+    }
+    
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load data
+        loadParameters();
+        loadDocumentation();
+        loadSourceCode();
+        loadRelatedTools();
+        
+        // Set up event listeners
+        executeButton.addEventListener('click', executeTool);
+        
+        resetParamsButton.addEventListener('click', function() {
+            // Reset all form fields
+            document.querySelectorAll('.parameter-card input, .parameter-card select').forEach(input => {
+                if (input.type === 'checkbox') {
+                    input.checked = input.defaultChecked;
+                } else {
+                    input.value = input.defaultValue;
+                }
+            });
+        });
+        
+        copyOutputButton.addEventListener('click', function() {
+            const text = outputContainer.innerText;
+            copyToClipboard(text);
+            
+            // Show tooltip
+            this.setAttribute('data-original-title', 'Copied!');
+            this.innerHTML = '<i class="fas fa-check"></i>';
+            
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-copy"></i>';
+            }, 2000);
+        });
+        
+        copySourceButton.addEventListener('click', function() {
+            const sourceCode = document.querySelector('#source-container code');
+            if (sourceCode) {
+                copyToClipboard(sourceCode.innerText);
+                
+                // Show tooltip
+                this.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+                
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-copy me-1"></i>Copy';
+                }, 2000);
+            }
+        });
+        
+        // Handle tab activation to load content
+        document.querySelectorAll('#toolTabs button').forEach(button => {
+            button.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-bs-target');
+                console.log(`Tab activated: ${tabId}`);
+            });
+        });
+    });
+</script>
+{% endblock %}
