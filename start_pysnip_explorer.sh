@@ -3,7 +3,7 @@
 # Script to start the PySnip Explorer web interface
 
 # Set the path to your PySnip directory
-export PYSNIP_ROOT=~/pysnip
+export PYSNIP_ROOT = /sdcard/1dd1/projects/personal/current/pysnip
 
 # Set Flask environment variables
 export FLASK_APP=app.py
