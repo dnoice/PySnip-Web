@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}500 - Server Error | PySnip Explorer{% endblock %}
+
+{% block content %}
+<div class="error-container text-center py-5">
+    <div class="error-graphic mb-4">
+        <div class="error-code">500</div>
+        <div class="error-illustration">
+            <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <!-- Terminal window -->
+                <rect x="20" y="30" width="160" height="140" rx="5" ry="5" fill="var(--bg-secondary)" stroke="var(--accent-primary)" stroke-width="2" />
+                <!-- Terminal header -->
+                <rect x="20" y="30" width="160" height="25" rx="5" ry="5" fill="var(--bg-tertiary)" />
+                <!-- Terminal buttons -->
+                <circle cx="35" cy="42.5" r="5" fill="#ff6b6b" />
+                <circle cx="55" cy="42.5" r="5" fill="#ffdd59" />
+                <circle cx="75" cy="42.5" r="5" fill="#1dd1a1" />
+                <!-- Terminal content -->
+                <g class="terminal-content" fill="var(--accent-primary)">
+                    <text x="35" y="80" font-family="monospace" font-size="12">$ python app.py</text>
+                    <text x="35" y="100" font-family="monospace" font-size="12" fill="var(--danger)">Traceback (most recent call last):</text>
+                    <text x="35" y="120" font-family="monospace" font-size="12" fill="var(--danger)">  Error: Internal Server Error</text>
+                    <text x="35" y="140" font-family="monospace" font-size="12">$ _</text>
+                </g>
+                <!-- Blinking cursor -->
+                <rect x="52" y="135" width="8" height="2" fill="var(--accent-primary)" class="blink">
+                    <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite" />
+                </rect>
+            </svg>
+        </div>
+    </div>
+    
+    <h1 class="display-4 text-gradient mb-3">Server Error</h1>
+    <p class="lead text-muted mb-4">Oops! Something went wrong on our end.</p>
+    
+    {% if error %}
+    <div class="alert alert-danger mx-auto" style="max-width: 600px;">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        {{ error }}
+    </div>
+    {% endif %}
+    
+    <div class="error-actions d-flex flex-wrap justify-content-center gap-3">
+        <a href="/" class="btn btn-accent btn-lg">
+            <i class="fas fa-home me-2"></i>Return to Homepage
+        </a>
+        <a href="javascript:location.reload()" class="btn btn-outline-accent btn-lg">
+            <i class="fas fa-sync me-2"></i>Try Again
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-container {
+        margin: 2rem auto;
+    }
+    
+    .error-code {
+        font-size: 6rem;
+        font-weight: 800;
+        line-height: 1;
+        position: absolute;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        color: transparent;
+        opacity: 0.3;
+        z-index: -1;
+    }
+    
+    .error-illustration {
+        position: relative;
+        z-index: 1;
+    }
+    
+    @keyframes blink {
+        0%, 100% { opacity: 0; }
+        50% { opacity: 1; }
+    }
+    
+    .blink {
+        animation: blink 1s step-end infinite;
+    }
+</style>
+{% endblock %}
